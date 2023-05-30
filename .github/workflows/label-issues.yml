@@ -1,0 +1,36 @@
+name: Issue Labeler
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  label-issues-policy:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Parse issue form
+        uses: stefanbuck/github-issue-parser@v2
+        id: issue-parser
+        with:
+          template-path: .github/ISSUE_TEMPLATE/${{ github.event.issue.template_repository }}
+
+      - name: Set labels based on policy
+        uses: redhat-plumbers-in-action/advanced-issue-labeler@main
+        with:
+          issue-form: ${{ steps.issue-parser.outputs.jsonString }}
+          policy: |
+            policy:
+              - template: ['bug_report.yml', 'feature.yml', 'doc.yml']
+                section:
+                  - id: ['contribution']
+                    block-list: ['Other']
+                    label:
+                      - name: 'gssoc23'
+                        keys: ['gssoc23']
+          token: ${{ secrets.GITHUB_TOKEN }}
