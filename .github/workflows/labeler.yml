@@ -1,0 +1,71 @@
+name: Add Labels to Issues and PRs
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+jobs:
+  add-labels:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Determine issue template name
+        id: get-template-name
+        run: |
+          echo "::set-output name=template_name::${{ github.event.issue.body }}"
+
+      - name: Add 'gssoc23' Label to Issues
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { owner, repo } = context.repo;
+            const issueNumber = context.payload.issue.number;
+            const templateName = ${{ steps.get-template-name.outputs.template_name }};
+
+            // Define the list of templates that should add the 'gssoc23' label
+            const validTemplates = ['bug_report.yml', 'doc.yml', 'feature.yml'];
+
+            // Check if the template name is in the list of valid templates
+            if (validTemplates.includes(templateName)) {
+              const label = 'gssoc23';
+
+              const addLabelParams = {
+                owner: owner,
+                repo: repo,
+                issue_number: issueNumber,
+                labels: [label]
+              };
+
+              await github.issues.addLabels(addLabelParams);
+
+              console.log(`Added the 'gssoc23' label to issue #${issueNumber}.`);
+            }
+
+      - name: Add 'gssoc23' Label to PRs
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { owner, repo } = context.repo;
+            const prNumber = context.payload.pull_request.number;
+            const label = 'gssoc23';
+
+            const addLabelParams = {
+              owner: owner,
+              repo: repo,
+              issue_number: prNumber,
+              labels: [label]
+            };
+
+            await github.issues.addLabels(addLabelParams);
+
+            console.log(`Added the 'gssoc23' label to PR #${prNumber}.`);
